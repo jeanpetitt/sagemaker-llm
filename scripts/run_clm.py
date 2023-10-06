@@ -133,7 +133,7 @@ def create_peft_model(model, gradient_checkpointing=True, bf16=True):
     peft_config = LoraConfig(
         r=64,
         lora_alpha=16,
-        target_modules=modules,
+        # target_modules=modules,
         lora_dropout=0.1,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
@@ -198,6 +198,7 @@ def training_function(args):
         logging_strategy="steps",
         logging_steps=10,
         save_strategy="no",
+        label_names=["labels"],
     )
 
     # Create Trainer instance
@@ -234,6 +235,7 @@ def training_function(args):
         model.save_pretrained(
             sagemaker_save_dir, safe_serialization=True, max_shard_size="2GB"
         )
+        
     else:
         trainer.model.save_pretrained(
             sagemaker_save_dir, safe_serialization=True
@@ -242,6 +244,10 @@ def training_function(args):
     # save tokenizer for easy inference
     tokenizer = AutoTokenizer.from_pretrained(args.model_id)
     tokenizer.save_pretrained(sagemaker_save_dir)
+    
+    # model push
+    model.push_to_hub("yvelos/Tsotsallm", use_auth_token=args.hf_token)
+    tokenizer.push_to_hub("yvelos/Tsotsallm", use_auth_token=args.hf_token)
 
 
 def main():
